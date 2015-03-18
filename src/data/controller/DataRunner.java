@@ -6,7 +6,10 @@ package data.controller;
  *@version 1.0
  */
 public class DataRunner {
-
+	/**
+	 * Runs the program.
+	 * @param args
+	 */
 	public static void main(String[] args) 
 	{
 		

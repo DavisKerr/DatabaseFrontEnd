@@ -23,6 +23,7 @@ public class DataAppController
 	public DataAppController()
 	{
 		database = new DataController(this);
+		
 		baseFrame = new DataFrame(this);
 	}
 	
@@ -31,8 +32,10 @@ public class DataAppController
 	 */
 	public void start()
 	{
-		
+		database.connectionStringBuilder("localhost", "dungeons_and_dragons_tables", "root", "");
+		database.setupConnection();
 	}
+	
 	
 	/**
 	 * Returns the frame.
@@ -42,5 +45,14 @@ public class DataAppController
 	{
 		return baseFrame;
 		
+	}
+	
+	/**
+	 * gets the database.
+	 * @return database The dataController.
+	 */
+	public DataController getDatabase()
+	{
+		return database;
 	}
 }

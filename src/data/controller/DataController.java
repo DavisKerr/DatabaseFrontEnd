@@ -7,7 +7,7 @@ import javax.swing.JOptionPane;
 /**
  * The class that works directly with the database.
  * @author Davis
- * @version 1.0
+ * @version 1.3 Arrays now work
  */
 public class DataController 
 {
@@ -23,6 +23,14 @@ public class DataController
 	 * The controller.
 	 */
 	private DataAppController baseController;
+	/**
+	 * The data to be displayed in a table in a later version.
+	 */
+	private String[][] data;
+	/**
+	 * the current query.
+	 */
+	private String currentQuery;
 	
 	/**
 	 * Constructs the class.
@@ -37,9 +45,27 @@ public class DataController
 	}
 	
 	/**
+	 * This method builds the connection string in the required format.
+	 * The ? means its the end of the path,
+	 * and the & means Im giving you new information.
+	 * @param pathToDBServer The main path to the server.
+	 * @param databaseName The name of the database.
+	 * @param userName The username of the user.
+	 * @param password The password the users password.
+	 */
+	public void connectionStringBuilder(String pathToDBServer, String databaseName, String userName, String password)
+	{
+		connectionString = "jdbc:mysql://";
+		connectionString += pathToDBServer;
+		connectionString += "/" + databaseName;
+		connectionString += "?user=" + userName;
+		connectionString += "&password=" + password;
+	}
+	
+	/**
 	 * Sets up the connection. Creates a list of errors if it fails.
 	 */
-	private void setupConnection() 
+	public void setupConnection() 
 	{
 		
 		try
@@ -61,7 +87,7 @@ public class DataController
 		
 		try
 		{
-			//Class.forName("com.mysql.jdbc.Driver");
+			Class.forName("com.mysql.jdbc.Driver");
 		}
 		catch(Exception currentException)
 		{
@@ -101,10 +127,318 @@ public class DataController
 			displayErrors(e);
 		}
 	}
+	
+	/**
+	 * Runs the SHOW TABLES query.
+	 * @return results the result of the query
+	 */
+	public String displayTables(/*String input*/)
+	{
+		String results = "";
+		String query = "SHOW TABLES"; // in order to ask a query, we need connection and a statement.
+		//String query = input;
+		try 
+		{
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answer = firstStatement.executeQuery(query);
+			
+			
+			while(answer.next())
+			{
+				results += answer.getString(1) + "\n";
+				
+			}
+			answer.close();
+			firstStatement.close();
+		} 
+		catch (SQLException currentSQLError) 
+		{
+			displayErrors(currentSQLError);
+		}
 		
+		return results;
+	}
+	
+	/**
+	 * Runs the Query DESCRIBE table_name.
+	 * @return result the result of the query
+	 */
+	public String describeTable()
+	{
+		String results = "";
+		String query = "DESCRIBE d_and_d_characters";
+		
+		try 
+		{
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answer = firstStatement.executeQuery(query);
+			
+			
+			
+			while(answer.next())
+			{
+				results += answer.getString(1) + "\t" + answer.getString(2) + "\t" + answer.getString(3) + "\t" + answer.getString(4) + "\n";
+			}
+			answer.close();
+			firstStatement.close();
+		} 
+		catch (SQLException currentSQLError) 
+		{
+			displayErrors(currentSQLError);
+		}
+		
+		return results;
+	}
+	
+	/**
+	 * Runs the select statement and builds an array.
+	 * @param query The SQL statement to execute.
+	 * @return result the result of the query
+	 */
+	public String selectTable(String query)
+	{
+		String results = "";
+		query = "SELECT * FROM d_and_d_characters";
+		createArray(query);
+		
+		return results;
+	}
 	
 	
+	public void sendQuery(String query)
+	{
+		createArray(query);
+	}
 	
+	/**
+	 * Runs the insert Query.
+	 * @return result the result of the query
+	 */
+	public int insertTable()
+	{
+		int rowsEffected = 0;
+		String query = "INSERT INTO tester ( name, favorite_color, age) VALUES (\'Jim\', \'red\', 5)";
+		
+		
+		try
+		{
+			Statement insertStatement = databaseConnection.createStatement();
+			rowsEffected = insertStatement.executeUpdate(query);
+			insertStatement.close();
+		}
+		catch(SQLException e)
+		{
+			displayErrors(e);
+		}
+		
+		return rowsEffected;
+	}
+	/**
+	 * Creates and returns an array.
+	 * @return
+	 */
+	public String[][] getResultArray()
+	{
+		
+		String[][] results;
+		String query = "SHOW TABLES";
+		
+		try 
+		{
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answer = firstStatement.executeQuery(query);
+			
+			int rowCount;
+			
+			answer.last(); // find the last number of rows
+			rowCount = answer.getRow();
+			answer.beforeFirst();
+			
+			ResultSetMetaData metaData = answer.getMetaData();
+			int colCount = metaData.getColumnCount(); // find the column count
+			
+			results = new String[rowCount][colCount];
+			
+			
+			
+			while(answer.next())
+			{
+				for(int col = 0; col < results[0].length; col++)
+				{
+					results[answer.getRow()-1][0] = answer.getString(1);
+				}
+				
+			}
+			answer.close();
+			firstStatement.close();
+		} 
+		catch (SQLException currentSQLError) 
+		{
+			results = new String[][]{{"empty"}};
+			displayErrors(currentSQLError);
+		}
+		
+		return results;
+	}
+	
+	/**
+	 * Returns the array built in the select query.
+	 * @return data the array of data
+	 */
+	public String[][] getDataArray()
+	{
+		return data;
+	}
+	/**
+	 * Gets the column names for the array.
+	 * @param query
+	 * @return columnInformation the columns name.
+	 */
+	public String[] getMetaData( String query)
+	{
+		String[] columnInformation;
+//		String query = "SHOW TABLES";
+		
+		try
+		{
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answer = firstStatement.executeQuery(query);
+			ResultSetMetaData myMeta = answer.getMetaData();
+			
+			columnInformation = new String[myMeta.getColumnCount()];
+			for(int spot = 0; spot < myMeta.getColumnCount(); spot++)
+			{
+				columnInformation[spot] = myMeta.getColumnName(spot + 1);
+			}
+			
+			
+			answer.close();
+			firstStatement.close();
+		}
+		catch(SQLException currentSQLError)
+		{
+			 columnInformation = new String[] {"Nothing exhists."};
+			displayErrors(currentSQLError);
+		}
+		
+		return columnInformation;
+		
+	}
+
+	/**
+	 * Builds a 2D array that displays information from a table.
+	 * @param query
+	 */
+	public void createArray(String query)
+	{
+		currentQuery = query;
+		if(checkForDataViolation())
+		{
+			
+		}
+		else
+		{
+			try 
+			{
+				if(query.contains("SELECT") || query.contains("select"))
+				{
+					Statement firstStatement = databaseConnection.createStatement();
+					ResultSet answer = firstStatement.executeQuery(query);
+					
+					ResultSetMetaData metaData = answer.getMetaData();
+					
+					int colNum = metaData.getColumnCount();
+					int rowNum = 0;
+					
+					answer.last();
+					rowNum = answer.getRow();
+					answer.beforeFirst();
+					answer.close();
+					firstStatement.close();
+					
+					data = new String[rowNum][colNum];
+					
+					firstStatement = databaseConnection.createStatement();
+					answer = firstStatement.executeQuery(query);
+					
+					int currentRow = 0;
+						
+					while(answer.next())
+					{
+						for(int col = 0; col < data[0].length; col++)
+						{
+							
+							data[currentRow][col] = answer.getString(col + 1);
+							
+						}
+						currentRow++;
+					}
+					
+					answer.close();
+					firstStatement.close();
+				}
+				else if(query.contains("INSERT"))
+				{
+					
+				}
+				
+				
+				
+			} 
+			catch (SQLException currentSQLError) 
+			{
+				displayErrors(currentSQLError);
+			}
+		}
+		
+	}
+	
+	public String[][] selectQueryResults(String query)
+	{
+		this.currentQuery = query;
+		String[][] results;
+		
+		try
+		{
+			if(checkForDataViolation())
+			{
+				throw new SQLException("Attempted illegal modification of data", ":( Done tried to mess up da data State...", Integer.MIN_VALUE);
+				
+			}
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answer = firstStatement.executeQuery(query);
+			int rowCount;
+			answer.last();
+			rowCount = answer.getRow();
+			answer.beforeFirst();
+			
+		}
+		catch(SQLException exception)
+		{
+			
+		}
+		return null;
+	}
+	
+	
+	/**
+	 * Checks to see if the statement would destroy the data.
+	 * @return true/false If its violated.
+	 */
+	private boolean checkForDataViolation()
+	{
+		if(currentQuery.toUpperCase().contains("DROP ")
+				|| currentQuery.toUpperCase().contains("TRUNCATE ")
+				|| currentQuery.toUpperCase().contains("SET ")
+				|| currentQuery.toUpperCase().contains("ALTER "))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	
 }
 
