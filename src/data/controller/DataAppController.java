@@ -32,7 +32,7 @@ public class DataAppController
 	 */
 	public void start()
 	{
-		database.connectionStringBuilder("localhost", "dungeons_and_dragons_tables", "root", "");
+		//database.connectionStringBuilder("localhost", "dungeons_and_dragons_tables", "root", "");
 		database.setupConnection();
 	}
 	
@@ -54,5 +54,11 @@ public class DataAppController
 	public DataController getDatabase()
 	{
 		return database;
+	}
+	
+	public void changeDatabase()
+	{
+		database = new DataController(this);
+		database.setupConnection();
 	}
 }

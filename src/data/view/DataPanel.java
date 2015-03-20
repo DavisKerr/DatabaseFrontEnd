@@ -15,7 +15,7 @@ import data.view.TableCellWrapRenderer;
 /**
  * The panel for the gui. It goes inside the frame.
  * @author Davis
- * @version 1.2
+ * @version 1.3 Improved gui.
  */
 public class DataPanel extends JPanel
 {
@@ -52,25 +52,9 @@ public class DataPanel extends JPanel
 	 */
 	private TableCellRenderer myCellRenderer;
 	/**
-	 * The username box.
-	 */
-	private JTextField username;
-	/**
-	 * the password box.
-	 */
-	private JPasswordField password;
-	/**
-	 * The label for the username box.
-	 */
-	private JLabel userLabel;
-	/**
 	 * The label for thelogin area.
 	 */
 	private JLabel loginLabel;
-	/**
-	 * The label for the password box.
-	 */
-	private JLabel passwordLabel;
 	/**
 	 * the login button *NOT USED*
 	 */
@@ -89,15 +73,11 @@ public class DataPanel extends JPanel
 		databaseView = new JTable();
 		//tablePane = new JScrollPane(databaseView);
 		baseLayout = new SpringLayout();
-		password = new JPasswordField(null, 20);
-		loginLabel = new JLabel("Login to the database here:");
-		userLabel = new JLabel("username:");
-		passwordLabel = new JLabel("Password:");
-		username = new JTextField(20);
-		
+		loginLabel = new JLabel("change the database here:");
 		queryArea = new JTextField(25);
 		model = new DefaultTableModel();
-		loginButton = new JButton("Login");
+		loginButton = new JButton("Change active database");
+		
 		
 		setupTable(baseController.getDatabase().getResultArray());
 		//setupTablePane();
@@ -125,20 +105,11 @@ public class DataPanel extends JPanel
 		baseLayout.putConstraint(SpringLayout.WEST, appButton, 403, SpringLayout.WEST, this);
 		baseLayout.putConstraint(SpringLayout.NORTH, appButton, 21, SpringLayout.SOUTH, queryArea);
 		baseLayout.putConstraint(SpringLayout.WEST, queryArea, 345, SpringLayout.WEST, this);
-		baseLayout.putConstraint(SpringLayout.NORTH, password, 104, SpringLayout.NORTH, this);
-		baseLayout.putConstraint(SpringLayout.NORTH, username, -8, SpringLayout.NORTH, userLabel);
-		baseLayout.putConstraint(SpringLayout.EAST, username, 0, SpringLayout.EAST, password);
-		baseLayout.putConstraint(SpringLayout.WEST, passwordLabel, 23, SpringLayout.WEST, this);
-		baseLayout.putConstraint(SpringLayout.EAST, userLabel, 0, SpringLayout.EAST, passwordLabel);
-		baseLayout.putConstraint(SpringLayout.WEST, password, 25, SpringLayout.EAST, passwordLabel);
-		baseLayout.putConstraint(SpringLayout.NORTH, passwordLabel, 8, SpringLayout.NORTH, password);
-		baseLayout.putConstraint(SpringLayout.WEST, loginLabel, 23, SpringLayout.WEST, this);
-		baseLayout.putConstraint(SpringLayout.NORTH, userLabel, 80, SpringLayout.NORTH, this);
-		baseLayout.putConstraint(SpringLayout.NORTH, loginButton, 6, SpringLayout.SOUTH, password);
-		baseLayout.putConstraint(SpringLayout.WEST, loginButton, 186, SpringLayout.WEST, this);
-		baseLayout.putConstraint(SpringLayout.SOUTH, loginLabel, -30, SpringLayout.SOUTH, username);
-		baseLayout.putConstraint(SpringLayout.NORTH, tablePane, 134, SpringLayout.SOUTH, password);
 		baseLayout.putConstraint(SpringLayout.SOUTH, tablePane, -201, SpringLayout.SOUTH, this);
+		baseLayout.putConstraint(SpringLayout.NORTH, loginLabel, 4, SpringLayout.NORTH, loginButton);
+		baseLayout.putConstraint(SpringLayout.EAST, loginLabel, -43, SpringLayout.WEST, loginButton);
+		baseLayout.putConstraint(SpringLayout.NORTH, loginButton, 52, SpringLayout.NORTH, this);
+		baseLayout.putConstraint(SpringLayout.EAST, loginButton, 0, SpringLayout.EAST, appButton);
 	}
 
 	/**
@@ -166,7 +137,12 @@ public class DataPanel extends JPanel
 			public void actionPerformed(ActionEvent click)
 			{
 				
-				setupTable(baseController.getDatabase().getResultArray());
+				DataPopupFrame popup = new DataPopupFrame(baseController);
+//				baseController.changeDatabase();
+//				String query = "SHOW TABLES";
+//				baseController.getDatabase().sendQuery(query);
+//				refreshTable(query);
+				
 			}
 		});
 		
@@ -185,16 +161,8 @@ public class DataPanel extends JPanel
 		this.add(appButton);
 		this.add(queryArea);
 		this.add(tablePane);
-		this.add(passwordLabel);
 		this.add(loginLabel);
-		this.add(userLabel);
-		this.add(password);
 		this.add(loginButton);
-		password.setEchoChar('~');
-		password.setForeground(Color.GREEN);
-		password.setFont(new Font("Serif", Font.BOLD, 15));
-		this.add(username);
-		username.setFont(new Font("Serif", Font.PLAIN ,15));
 		
 	}
 	/**

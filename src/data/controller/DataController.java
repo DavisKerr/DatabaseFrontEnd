@@ -7,7 +7,7 @@ import javax.swing.JOptionPane;
 /**
  * The class that works directly with the database.
  * @author Davis
- * @version 1.3 Arrays now work
+ * @version 1.4 Began creating more query methods.
  */
 public class DataController 
 {
@@ -38,7 +38,8 @@ public class DataController
 	 */
 	public DataController(DataAppController baseController)
 	{
-		connectionString = "jdbc:mysql://localhost/dungeons_and_dragons_tables?user=root";//the user=root is important!
+		//connectionString = "jdbc:mysql://localhost/dungeons_and_dragons_tables?user=root";//the user=root is important!
+		connectionStringBuilder("localhost", "null", "root", "");
 		this.baseController = baseController;
 		checkDriver();
 		setupConnection();
@@ -57,7 +58,7 @@ public class DataController
 	{
 		connectionString = "jdbc:mysql://";
 		connectionString += pathToDBServer;
-		connectionString += "/" + databaseName;
+		connectionString += "/" + JOptionPane.showInputDialog("Enter databse name :");
 		connectionString += "?user=" + userName;
 		connectionString += "&password=" + password;
 	}
@@ -100,7 +101,7 @@ public class DataController
 	 * Displays the errors.
 	 * @param currentException The error message.
 	 */
-	private void displayErrors(Exception currentException) 
+	private void displayErrors(Exception currentException)
 	{
 		//baseController.getAppFrame chooses a place for the popup.
 		JOptionPane.showMessageDialog(baseController.getAppFrame(), currentException.getMessage());
@@ -159,25 +160,21 @@ public class DataController
 		return results;
 	}
 	
-	/**
-	 * Runs the Query DESCRIBE table_name.
-	 * @return result the result of the query
-	 */
-	public String describeTable()
+	public String displayDBS()
 	{
 		String results = "";
-		String query = "DESCRIBE d_and_d_characters";
-		
+		String query = "SHOW DATABASES"; // in order to ask a query, we need connection and a statement.
+		//String query = input;
 		try 
 		{
 			Statement firstStatement = databaseConnection.createStatement();
 			ResultSet answer = firstStatement.executeQuery(query);
 			
 			
-			
 			while(answer.next())
 			{
-				results += answer.getString(1) + "\t" + answer.getString(2) + "\t" + answer.getString(3) + "\t" + answer.getString(4) + "\n";
+				results += answer.getString(1) + "\n";
+				
 			}
 			answer.close();
 			firstStatement.close();
@@ -191,20 +188,9 @@ public class DataController
 	}
 	
 	/**
-	 * Runs the select statement and builds an array.
-	 * @param query The SQL statement to execute.
-	 * @return result the result of the query
+	 * sends the query.
+	 * @param query the query that was sent.
 	 */
-	public String selectTable(String query)
-	{
-		String results = "";
-		query = "SELECT * FROM d_and_d_characters";
-		createArray(query);
-		
-		return results;
-	}
-	
-	
 	public void sendQuery(String query)
 	{
 		createArray(query);
@@ -332,63 +318,57 @@ public class DataController
 	public void createArray(String query)
 	{
 		currentQuery = query;
-		if(checkForDataViolation())
+		try 
 		{
-			
-		}
-		else
-		{
-			try 
+			if(checkForDataViolation())
 			{
-				if(query.contains("SELECT") || query.contains("select"))
-				{
-					Statement firstStatement = databaseConnection.createStatement();
-					ResultSet answer = firstStatement.executeQuery(query);
-					
-					ResultSetMetaData metaData = answer.getMetaData();
-					
-					int colNum = metaData.getColumnCount();
-					int rowNum = 0;
-					
-					answer.last();
-					rowNum = answer.getRow();
-					answer.beforeFirst();
-					answer.close();
-					firstStatement.close();
-					
-					data = new String[rowNum][colNum];
-					
-					firstStatement = databaseConnection.createStatement();
-					answer = firstStatement.executeQuery(query);
-					
-					int currentRow = 0;
-						
-					while(answer.next())
-					{
-						for(int col = 0; col < data[0].length; col++)
-						{
-							
-							data[currentRow][col] = answer.getString(col + 1);
-							
-						}
-						currentRow++;
-					}
-					
-					answer.close();
-					firstStatement.close();
-				}
-				else if(query.contains("INSERT"))
-				{
-					
-				}
-				
-				
-				
-			} 
-			catch (SQLException currentSQLError) 
-			{
-				displayErrors(currentSQLError);
+				throw new SQLException("Attempted illegal modification of data", ":( Done tried to mess up da data State...", Integer.MIN_VALUE);
 			}
+			else
+			{
+				Statement firstStatement = databaseConnection.createStatement();
+				ResultSet answer = firstStatement.executeQuery(query);
+				
+				ResultSetMetaData metaData = answer.getMetaData();
+				
+				int colNum = metaData.getColumnCount();
+				int rowNum = 0;
+				
+				answer.last();
+				rowNum = answer.getRow();
+				answer.beforeFirst();
+				answer.close();
+				firstStatement.close();
+				
+				data = new String[rowNum][colNum];
+				
+				firstStatement = databaseConnection.createStatement();
+				answer = firstStatement.executeQuery(query);
+				
+				int currentRow = 0;
+					
+				while(answer.next())
+				{
+					for(int col = 0; col < data[0].length; col++)
+					{
+						
+						data[currentRow][col] = answer.getString(col + 1);
+						
+					}
+					currentRow++;
+				}
+				
+				answer.close();
+				firstStatement.close();
+			}
+			
+		
+			
+				
+		} 
+		catch (SQLException currentSQLError) 
+		{
+			displayErrors(currentSQLError);
 		}
 		
 	}
@@ -420,7 +400,6 @@ public class DataController
 		return null;
 	}
 	
-	
 	/**
 	 * Checks to see if the statement would destroy the data.
 	 * @return true/false If its violated.
@@ -440,5 +419,60 @@ public class DataController
 		}
 	}
 	
+	/**
+	 * Makes sure that a query will not drop an entire database.
+	 * @return boolean Did the user try to drop the table.
+	 */
+	private boolean checkForStructureViolation()
+	{
+		if(currentQuery.toUpperCase().contains(" DATABASE "))
+		{
+			return true;
+		}
+		else 
+		{
+			return false;
+		}
+	}
+	
+	/**
+	 * method for dropping tables or indexes from a database.
+	 * @throws SQLException when the query contains a DROP DATABSE command.
+	 */
+	public void dropStatement()
+	{
+		String results;
+		try
+		{
+			if(checkForStructureViolation())
+			{
+				throw new SQLException("It is illegal to delete a db.", "DONT DO IT AGAIN!", Integer.MIN_VALUE);
+			}
+			
+			if(currentQuery.toUpperCase().contains("INDEX"))
+			{
+				results = "The index was ";
+			}
+			else
+			{
+				results = "The table was ";
+			}
+			Statement dropStatement = databaseConnection.createStatement();
+			int affected = dropStatement.executeUpdate(currentQuery);
+			
+			dropStatement.close();
+			if(affected == 0)
+			{
+				results +=  "dropped";
+			}
+			
+			JOptionPane.showMessageDialog(baseController.getAppFrame() , results);
+			
+		}
+		catch(SQLException e)
+		{
+			displayErrors(e);
+		}
+	}
 }
 
