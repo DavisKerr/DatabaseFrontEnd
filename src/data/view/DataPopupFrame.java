@@ -19,9 +19,9 @@ public class DataPopupFrame extends JFrame
 	 * Constructor: builds the panel and then runs the setupFrame() method.
 	 * @param baseController Links to the controller
 	 */
-	public DataPopupFrame(DataAppController baseController)
+	public DataPopupFrame(DataAppController baseController, DataPanel basePanel)
 	{
-		popupPanel = new DataPopupPanel(baseController);
+		popupPanel = new DataPopupPanel(baseController, basePanel);
 		setupFrame();
 		
 	}
@@ -32,7 +32,7 @@ public class DataPopupFrame extends JFrame
 	private void setupFrame() 
 	{
 		
-		this.setSize(500, 260);
+		this.setSize(400, 250);
 		this.setResizable(true);
 		this.setContentPane(popupPanel);
 		this.setVisible(true);

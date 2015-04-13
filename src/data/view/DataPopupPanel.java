@@ -2,37 +2,36 @@ package data.view;
 
 import java.awt.Color;
 
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SpringLayout;
+import javax.swing.*;
 
 import data.controller.DataAppController;
+
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
 public class DataPopupPanel extends JPanel
 {
 	private JTextArea databaseInfo;
-	private JScrollPane container;
-	private JTextField dbNameField;
 	private JButton submitButton;
 	private JButton cancelButton;
 	private SpringLayout baseLayout;
 	private DataAppController baseController;
+	private DataPanel basePanel;
+	private JComboBox selecter;
 	
-	public DataPopupPanel(DataAppController baseController)
+	public DataPopupPanel(DataAppController baseController, DataPanel basePanel)
 	{
 		databaseInfo = new JTextArea(5, 5);
-		container = new JScrollPane(databaseInfo);
-		dbNameField = new JTextField(20);
 		submitButton = new JButton("Submit");
 		cancelButton = new JButton("Cancel");
 		baseLayout = new SpringLayout();
-		this.baseController = baseController;
 		
+		selecter = new JComboBox();
+		
+		this.baseController = baseController;
+		this.basePanel = basePanel;
+		
+		setupSelecter();
 		setupPanel();
 		setupLayout();
 		setupInfoBox();
@@ -40,47 +39,71 @@ public class DataPopupPanel extends JPanel
 		
 	}
 
+	private void setupSelecter() 
+	{
+		String[] results = baseController.getDatabase().displayDBS();
+		selecter.setModel(new DefaultComboBoxModel(baseController.getDatabase().displayDBS()));
+		
+	}
+
 	private void setupInfoBox() 
 	{
 		
 		databaseInfo.setEditable(false);
-		container.setWheelScrollingEnabled(true);
-		String results = baseController.getDatabase().displayDBS();
-		databaseInfo.setText(results);
+		//String[] results = baseController.getDatabase().displayDBS();
+		
 	}
 
 	private void setupLayout() 
 	{
-		baseLayout.putConstraint(SpringLayout.NORTH, container, 22, SpringLayout.NORTH, this);
-		baseLayout.putConstraint(SpringLayout.WEST, container, 101, SpringLayout.WEST, this);
-		baseLayout.putConstraint(SpringLayout.EAST, container, -72, SpringLayout.EAST, this);
-		baseLayout.putConstraint(SpringLayout.NORTH, dbNameField, 169, SpringLayout.NORTH, this);
-		baseLayout.putConstraint(SpringLayout.EAST, cancelButton, -151, SpringLayout.EAST, this);
-		baseLayout.putConstraint(SpringLayout.EAST, dbNameField, -151, SpringLayout.EAST, this);
-		baseLayout.putConstraint(SpringLayout.SOUTH, container, -6, SpringLayout.NORTH, dbNameField);
-		baseLayout.putConstraint(SpringLayout.NORTH, submitButton, 6, SpringLayout.SOUTH, dbNameField);
-		baseLayout.putConstraint(SpringLayout.WEST, submitButton, 0, SpringLayout.WEST, dbNameField);
-		baseLayout.putConstraint(SpringLayout.NORTH, cancelButton, 6, SpringLayout.SOUTH, dbNameField);
-		
+		baseLayout.putConstraint(SpringLayout.WEST, selecter, 92, SpringLayout.WEST, this);
+		baseLayout.putConstraint(SpringLayout.SOUTH, selecter, -89, SpringLayout.NORTH, submitButton);
+		baseLayout.putConstraint(SpringLayout.NORTH, cancelButton, 0, SpringLayout.NORTH, submitButton);
+		baseLayout.putConstraint(SpringLayout.WEST, cancelButton, 114, SpringLayout.EAST, submitButton);
+		baseLayout.putConstraint(SpringLayout.SOUTH, submitButton, -19, SpringLayout.SOUTH, this);
+		baseLayout.putConstraint(SpringLayout.WEST, submitButton, 32, SpringLayout.WEST, this);
 	}
 
 	private void setupPanel() 
 	{
-		this.setSize(500, 250);
+		this.setSize(400, 250);
 		this.setBackground(Color.LIGHT_GRAY);
 		this.setVisible(true);
 		this.setLayout(baseLayout);
-		this.add(container);
-		this.add(dbNameField);
 		this.add(submitButton);
 		this.add(cancelButton);
+		this.add(selecter);
 		
 	}
 
 	private void setupListeners() 
 	{
 		
+		submitButton.addActionListener(new ActionListener()
+		{
+
+			@Override
+			public void actionPerformed(ActionEvent click) 
+			{
+				baseController.changeDatabase((String) (selecter.getItemAt(selecter.getSelectedIndex())));
+				baseController.getDatabase().sendQuery("SHOW TABLES");
+				basePanel.refreshTable("SHOW TABLES");
+				basePanel.setupSelecter();
+				basePanel.setClose();
+			}
+			
+		});
 		
+		cancelButton.addActionListener(new ActionListener()
+		{
+
+			@Override
+			public void actionPerformed(ActionEvent click) 
+			{
+				basePanel.setClose();
+			}
+			
+		});
 		
 	}
 }

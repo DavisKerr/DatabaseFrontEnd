@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -59,6 +61,9 @@ public class DataPanel extends JPanel
 	 * the login button *NOT USED*
 	 */
 	private JButton loginButton;
+	private Boolean close;
+	private DataPopupFrame popup;
+	private JComboBox selecter;
 	
 	/**
 	 * Sets the baseController, creates the spring layout, and runs the helper methods.
@@ -77,15 +82,26 @@ public class DataPanel extends JPanel
 		queryArea = new JTextField(25);
 		model = new DefaultTableModel();
 		loginButton = new JButton("Change active database");
+		selecter = new JComboBox();
+		
 		
 		
 		setupTable(baseController.getDatabase().getResultArray());
 		//setupTablePane();
+		setupSelecter();
 		setupPanel();
 		setupLayout();
 		setupListeners();
 	}
 	
+	public void setupSelecter() 
+	{
+		
+		String[] results = baseController.getDatabase().showTables();
+		selecter.setModel(new DefaultComboBoxModel(results));
+		
+	}
+
 	/**
 	 * sets the color of the pane.
 	 */
@@ -110,6 +126,7 @@ public class DataPanel extends JPanel
 		baseLayout.putConstraint(SpringLayout.EAST, loginLabel, -43, SpringLayout.WEST, loginButton);
 		baseLayout.putConstraint(SpringLayout.NORTH, loginButton, 52, SpringLayout.NORTH, this);
 		baseLayout.putConstraint(SpringLayout.EAST, loginButton, 0, SpringLayout.EAST, appButton);
+		baseLayout.putConstraint(SpringLayout.WEST, selecter, 293, SpringLayout.WEST, this);
 	}
 
 	/**
@@ -136,14 +153,37 @@ public class DataPanel extends JPanel
 			@Override
 			public void actionPerformed(ActionEvent click)
 			{
-				
-				DataPopupFrame popup = new DataPopupFrame(baseController);
+				Boolean close = false;
+//				baseController.getDatabase().fixPermissions();
+				popup = new DataPopupFrame(baseController, DataPanel.this);
+				//popup.dispose();
 //				baseController.changeDatabase();
 //				String query = "SHOW TABLES";
 //				baseController.getDatabase().sendQuery(query);
 //				refreshTable(query);
 				
 			}
+		});
+		
+		selecter.addItemListener(new ItemListener()
+		{
+
+			@Override
+			public void itemStateChanged(ItemEvent selected) 
+			{
+				String item = (String) (selecter.getItemAt(selecter.getSelectedIndex()));
+				String query = "SELECT * FROM " + (String) (selecter.getItemAt(selecter.getSelectedIndex()));
+				if(!item.equals(""))
+				{
+					baseController.getDatabase().sendQuery(query);
+					refreshTable(query);
+				}
+				
+				
+			}
+			
+			
+			
 		});
 		
 	}
@@ -163,6 +203,7 @@ public class DataPanel extends JPanel
 		this.add(tablePane);
 		this.add(loginLabel);
 		this.add(loginButton);
+		this.add(selecter);
 		
 	}
 	/**
@@ -175,6 +216,7 @@ public class DataPanel extends JPanel
 		
 		databaseView = new JTable(new DefaultTableModel(values, baseController.getDatabase().getMetaData("SHOW TABLES") ));
 		tablePane = new JScrollPane(databaseView);
+		baseLayout.putConstraint(SpringLayout.SOUTH, selecter, -81, SpringLayout.NORTH, tablePane);
 		
 		
 		
@@ -187,7 +229,7 @@ public class DataPanel extends JPanel
 	 * Refreshes the data everytime the table needs to change.
 	 * @param query
 	 */
-	private void refreshTable(String query)
+	public void refreshTable(String query)
 	{
 		
 		model.setDataVector(baseController.getDatabase().getDataArray(), baseController.getDatabase().getMetaData(query));
@@ -199,4 +241,24 @@ public class DataPanel extends JPanel
 		}
 	}
 	
+	public void setClose()
+	{
+		popup.dispose();
+	}
+	
+	public boolean checkInt(String input)
+	{
+		boolean isInt = true;
+		try
+		{
+			int num = Integer.parseInt(input);
+		}
+		catch(Exception generalException)
+		{
+			JOptionPane.showMessageDialog(null, "Please type in ONLY numbers");
+			isInt = false;
+		}
+		return isInt;
+		
+	}
 }

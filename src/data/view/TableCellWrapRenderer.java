@@ -1,5 +1,6 @@
 package data.view;
 
+import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JTable;
@@ -26,6 +27,14 @@ public class TableCellWrapRenderer extends JTextArea implements TableCellRendere
 		int lines = (textPixelLength / (columnSelected.getWidth())) + 1;
 		int height = fontHeight * lines;
 		table.setRowHeight(row, height);
+		if(row % 2 == 0)
+		{
+			this.setBackground(Color.GRAY);
+		}
+		else
+		{
+			this.setBackground(Color.LIGHT_GRAY);
+		}
 		return this;
 	}
 }

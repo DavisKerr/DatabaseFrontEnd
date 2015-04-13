@@ -36,10 +36,15 @@ public class DataController
 	 * Constructs the class.
 	 * @param baseController The AppController
 	 */
-	public DataController(DataAppController baseController)
+	public DataController(DataAppController baseController, String dbName)
 	{
-		//connectionString = "jdbc:mysql://localhost/dungeons_and_dragons_tables?user=root";//the user=root is important!
-		connectionStringBuilder("localhost", "null", "root", "");
+//		connectionString = "jdbc:mysql://localhost/dungeons_and_dragons_tables?user=root";//the user=root is important!
+		if(dbName.equals(""))
+		{
+			dbName = JOptionPane.showInputDialog("Enter databse name :");
+		}
+		
+		connectionStringBuilder("localhost", dbName, "Davis", "davis1");
 		this.baseController = baseController;
 		checkDriver();
 		setupConnection();
@@ -58,7 +63,7 @@ public class DataController
 	{
 		connectionString = "jdbc:mysql://";
 		connectionString += pathToDBServer;
-		connectionString += "/" + JOptionPane.showInputDialog("Enter databse name :");
+		connectionString += "/" + databaseName;
 		connectionString += "?user=" + userName;
 		connectionString += "&password=" + password;
 	}
@@ -160,20 +165,29 @@ public class DataController
 		return results;
 	}
 	
-	public String displayDBS()
+	public String[] displayDBS()
 	{
-		String results = "";
+		String[] results;
 		String query = "SHOW DATABASES"; // in order to ask a query, we need connection and a statement.
 		//String query = input;
+		int rowCount = 0;
 		try 
 		{
 			Statement firstStatement = databaseConnection.createStatement();
 			ResultSet answer = firstStatement.executeQuery(query);
 			
+			answer.last(); // find the last number of rows
+			rowCount = answer.getRow();
+			answer.beforeFirst();
+			results = new String[rowCount];
 			
 			while(answer.next())
 			{
-				results += answer.getString(1) + "\n";
+				for(int col = 0; col < results.length; col++ )
+				{
+					results[answer.getRow()-1] = answer.getString(1);
+				}
+				
 				
 			}
 			answer.close();
@@ -182,6 +196,7 @@ public class DataController
 		catch (SQLException currentSQLError) 
 		{
 			displayErrors(currentSQLError);
+			results = null;
 		}
 		
 		return results;
@@ -196,14 +211,30 @@ public class DataController
 		createArray(query);
 	}
 	
+	public void fixPermissions()
+	{
+		String fix = "GRANT ALL ON *.* TO `root`@`localhost`";
+		try
+		{
+			databaseConnection.createStatement().executeQuery(fix);
+		}
+		catch(SQLException e)
+		{
+			displayErrors(e);
+		}
+	}
+	
+	
 	/**
 	 * Runs the insert Query.
 	 * @return result the result of the query
 	 */
 	public int insertTable()
-	{
+	{ 
+		
 		int rowsEffected = 0;
 		String query = "INSERT INTO tester ( name, favorite_color, age) VALUES (\'Jim\', \'red\', 5)";
+		
 		
 		
 		try
@@ -473,6 +504,44 @@ public class DataController
 		{
 			displayErrors(e);
 		}
+	}
+
+	public String[] showTables() 
+	{
+		String[] results;
+		String query = "SHOW TABLES"; // in order to ask a query, we need connection and a statement.
+		//String query = input;
+		int rowCount = 0;
+		try 
+		{
+			Statement firstStatement = databaseConnection.createStatement();
+			ResultSet answer = firstStatement.executeQuery(query);
+			
+			answer.last(); // find the last number of rows
+			rowCount = answer.getRow();
+			answer.beforeFirst();
+			results = new String[rowCount + 1];
+			
+			while(answer.next())
+			{
+				for(int col = 1; col < results.length; col++ )
+				{
+					results[answer.getRow()] = answer.getString(1);
+				}
+				results[0] = "";
+				
+				
+			}
+			answer.close();
+			firstStatement.close();
+		} 
+		catch (SQLException currentSQLError) 
+		{
+			displayErrors(currentSQLError);
+			results = null;
+		}
+		
+		return results;
 	}
 }
 

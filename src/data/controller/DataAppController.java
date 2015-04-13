@@ -22,7 +22,7 @@ public class DataAppController
 	 */
 	public DataAppController()
 	{
-		database = new DataController(this);
+		database = new DataController(this, "");
 		
 		baseFrame = new DataFrame(this);
 	}
@@ -56,9 +56,10 @@ public class DataAppController
 		return database;
 	}
 	
-	public void changeDatabase()
+	public void changeDatabase(String dbName)
 	{
-		database = new DataController(this);
+		database = new DataController(this, dbName);
 		database.setupConnection();
+		
 	}
 }
